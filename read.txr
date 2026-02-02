@@ -19,5 +19,11 @@ git remote add origin https://github.com/phongluong8901/nodejs-eco.git
 -- kiem tra connect github
 git remote -v
 
--- luu len github - git (luu het thay doi)
+-- luu len gitlocal - git (luu het thay doi ->A (san sang) ->luu vao git local(commit))
 git add .
+git commit -m "e1"
+
+-- push tu git local len github (go chu u lan dau)
+git push -u origin master
+git push
+
