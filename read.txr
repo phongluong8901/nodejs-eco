@@ -23,7 +23,11 @@ git remote -v
 git add .
 git commit -m "e1"
 
--- push tu git local len github (go chu u lan dau)
+-- push tu git local len github (go chu u lan dau) -> lan sau chi can git push
 git push -u origin master
+
 git push
+
+-- keo code tu github ve local
+git pull origin
 
