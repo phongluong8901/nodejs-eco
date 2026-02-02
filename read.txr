@@ -1,0 +1,23 @@
+---
+cd server
+
+-- ra packge.json
+npm init -y
+
+-- dat ten la dev o packagejson
+npm run dev
+
+-- install
+npm i express-async-handler dotenv jsonwebtoken mongoose bcrypt 
+
+-- theem git quan ly
+git init
+
+-- connect voi github
+git remote add origin https://github.com/phongluong8901/nodejs-eco.git
+
+-- kiem tra connect github
+git remote -v
+
+-- luu len github - git (luu het thay doi)
+git add .
