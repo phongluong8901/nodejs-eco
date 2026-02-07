@@ -1,6 +1,7 @@
 // !mdbgum
 const mongoose = require('mongoose'); // Erase if already required
 const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 
 // Declare the Schema of the Mongo model
 var userSchema = new mongoose.Schema({
@@ -30,13 +31,18 @@ var userSchema = new mongoose.Schema({
         type:String,
         default: 'user',
     },
-    cart: {
-        type:Array,
-        default: [],
-    },
-    address: [
-        {type:mongoose.Types.ObjectId, ref: 'Address'}
+    cart: [
+        {
+            product: {type: mongoose.Types.ObjectId, ref: 'Product'},
+            quantity: Number,
+            color: String,
+        }
     ],
+    // address: {
+    //     type: Array,
+    //     default: []
+    // },
+    address: String,
     wishlist: [
         {type:mongoose.Types.ObjectId, ref: 'Product'}
     ],
@@ -56,21 +62,37 @@ var userSchema = new mongoose.Schema({
     passwordResetExpires: {
         type:String,
     },
+    registerToken: {
+        type:String,
+    },
 }, {timestamps: true}
 );
 
 // truoc khi luu se thuc hien cac ham
 userSchema.pre('save', async function(next) {
-    // neu thay doi -> true | khong thay doi -> next() tuong tu return
-    if (!this.isModified('password')) {
-        next()
-    }
+    // Nếu không đổi pass thì thoát luôn
+    if (!this.isModified('password')) return next();
 
-    // so luong phuc tap cho vao bam password 10
-    const salt = bcrypt.genSaltSync(10)
-    //doi lai password = password sau bam (hash)
-    this.password = await bcrypt.hash(this.password, salt)
-})
+    // Dùng hash đồng bộ để tránh lỗi callback
+    const salt = bcrypt.genSaltSync(10);
+    this.password = bcrypt.hashSync(this.password, salt);
+    
+    // next();
+});
+
+userSchema.methods = {
+    isCorrectPassword: async function (password) {
+        return await bcrypt.compare(password, this.password)    //so sanh 2 ngam -> T or F
+    },
+    createPasswordChangedToken: function () {
+        const resetToken = crypto.randomBytes(32).toString('hex')
+        this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex')
+        this.passwordResetExpires = new Date(Date.now() + 15*60*1000)//15p -> milisecond
+        return resetToken
+    }
+} 
+
+
 
 //Export the model
 module.exports = mongoose.model('User', userSchema);
