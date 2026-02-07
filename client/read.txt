@@ -1,0 +1,29 @@
+--- lib
+redux toolkit
+createAction
+createSlice
+
+tailwind
+
+--- install
+
+npx create-react-app client --template redux
+
+
+npm install -D tailwindcss @tailwindcss/postcss postcss autoprefixer
+npm install @reduxjs/toolkit react-redux --force
+npm install -D @tailwindcss/postcss postcss autoprefixer
+
+npm install react-router-dom redux-persist react-toastify moment
+
+npm i react-icons
+
+npm i axios
+
+npm install react-slick slick-carousel
+
+npm i @tailwindcss/line-clamp
+
+npm i sweetalert2
+npm install --save react-toastify
+--- run
