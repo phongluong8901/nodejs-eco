@@ -8,6 +8,8 @@ const makeToken = require('uniqid')
 const asyncHandler = require('express-async-handler')
 const { response } = require('express')
 
+const {users_data} = require('../utils/constant')
+
 // const register = async (req, res, next) => {
 //     try {
 //         const { email, password, firstname, lastname } = req.body
@@ -127,7 +129,7 @@ const login = async (req, res, next) => {
 const getCurrent = async (req, res, next) => {
     try {
         const { _id } = req.user
-        const user = await User.findById(_id).select('-refreshToken -password -role')
+        const user = await User.findById(_id).select('-refreshToken -password')
         return res.status(200).json({
             success: !!user,
             rs: user || 'User not found'
@@ -212,11 +214,76 @@ const resetPassword = async (req, res, next) => {
 }
 
 const getUsers = asyncHandler(async (req, res) => {
-    const response = await User.find().select('-refreshToken -password -role')
-    return res.status(200).json({
-        success: response ? true: false,
-        users: response
-    })
+    // 1. Tạo bản sao của query
+    const queries = { ...req.query }
+
+    // 2. Tách các trường đặc biệt không dùng để filter trực tiếp
+    const excludeFields = ['sort', 'page', 'fields', 'limit']
+    excludeFields.forEach(el => delete queries[el])
+
+    // 3. Format các toán tử MongoDB (nếu có dùng lọc theo ngày tạo, v.v.)
+    let queryString = JSON.stringify(queries)
+    queryString = queryString.replace(/\b(gte|gt|lte|lt)\b/g, m => `$${m}`)
+    let formattedQueries = JSON.parse(queryString)
+
+    // 4. LỌC THEO TÊN HOẶC EMAIL (Search)
+    // Cho phép tìm kiếm không cần chính xác tuyệt đối (Regex)
+    if (queries?.name) formattedQueries.name = { $regex: queries.name, $options: 'i' }
+    if (queries?.email) formattedQueries.email = { $regex: queries.email, $options: 'i' }
+    
+    // Lọc theo Role hoặc Tình trạng Block (nếu FE gửi lên)
+    if (queries?.role) formattedQueries.role = queries.role
+    if (queries?.isBlocked) formattedQueries.isBlocked = queries.isBlocked
+
+    // 5. TÌM KIẾM TỔNG HỢP (Mẹo: Tìm 1 ô ra cả name và email)
+    if (queries?.q) {
+        delete formattedQueries.q
+        formattedQueries['$or'] = [
+            { name: { $regex: queries.q, $options: 'i' } },
+            { email: { $regex: queries.q, $options: 'i' } }
+        ]
+    }
+
+    // 6. KHỞI TẠO TRUY VẤN
+    let mongoQuery = User.find(formattedQueries)
+
+    // 7. SẮP XẾP (SORT)
+    if (req.query.sort) {
+        const sortBy = req.query.sort.split(',').join(' ')
+        mongoQuery = mongoQuery.sort(sortBy)
+    } else {
+        mongoQuery = mongoQuery.sort('-createdAt') // Mới nhất lên đầu
+    }
+
+    // 8. GIỚI HẠN TRƯỜNG (Ví dụ ẩn mật khẩu)
+    if (req.query.fields) {
+        const fields = req.query.fields.split(',').join(' ')
+        mongoQuery = mongoQuery.select(fields)
+    } else {
+        mongoQuery = mongoQuery.select('-password') // Thường ẩn password khi lấy list
+    }
+
+    // 9. PHÂN TRANG (PAGINATION)
+    const page = +req.query.page || 1
+    const limit = +req.query.limit || 10
+    const skip = (page - 1) * limit
+    mongoQuery = mongoQuery.skip(skip).limit(limit)
+
+    // 10. THỰC THI
+    try {
+        const users = await mongoQuery
+        const counts = await User.countDocuments(formattedQueries)
+
+        return res.status(200).json({
+            success: true,
+            counts,
+            users,
+            page,
+            limit
+        })
+    } catch (error) {
+        throw new Error(error.message)
+    }
 })
 
 const deleteUser = asyncHandler(async (req, res) => {
@@ -229,23 +296,47 @@ const deleteUser = asyncHandler(async (req, res) => {
     })
 })
 
-const updateUser = asyncHandler(async (req, res) => {
-    const {_id} = req.user
-    if (!_id || Object.keys(req.body).length === 0) throw new Error('Missing inputs')
-    const response = await User.findByIdAndUpdate(_id, req.body, {new: true}).select('-password -role -refreshToken')
+const deleteUserByAdmin = asyncHandler(async (req, res) => {
+    const { uid } = req.params // Lấy uid từ /user/:uid
+    
+    const response = await User.findByIdAndDelete(uid)
+    
     return res.status(200).json({
-        success: response ? true: false,
-        updateUser: response ? response : 'Some thing went wrong'
+        success: response ? true : false,
+        mes: response 
+            ? `User với email ${response.email} đã bị xóa.` 
+            : 'Không tìm thấy người dùng này trong hệ thống.'
     })
 })
 
-const updateUserByAdmin = asyncHandler(async (req, res) => {
-    const {uid} = req.params
-    if (Object.keys(req.body).length === 0) throw new Error('Missing inputs')
-    const response = await User.findByIdAndUpdate(uid, req.body, {new: true}).select('-password -role -refreshToken')
+const updateUser = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    
+    // Create a copy of req.body to update
+    const data = { ...req.body };
+
+    // If there is a file (uploaded via Cloudinary/Multer), add the path to data
+    if (req.file) data.avatar = req.file.path;
+
+    if (!_id || Object.keys(data).length === 0) throw new Error('Missing inputs');
+
+    const response = await User.findByIdAndUpdate(_id, data, { new: true })
+        .select('-password -role -refreshToken');
+
     return res.status(200).json({
-        success: response ? true: false,
-        updateUser: response ? response : 'Some thing went wrong'
+        success: response ? true : false,
+        updatedUser: response ? response : 'Something went wrong' // Fixed typo: updatedUser
+    });
+});
+
+const updateUserByAdmin = asyncHandler(async (req, res) => {
+    const { uid } = req.params
+    if (Object.keys(req.body).length === 0) throw new Error('Missing inputs')
+    const response = await User.findByIdAndUpdate(uid, req.body, { new: true }).select('-password -role -refreshToken')
+    return res.status(200).json({
+        success: response ? true : false,
+        mes: response ? 'Updated user successfully' : 'Something went wrong', // Thêm mes ở đây
+        updatedUser: response 
     })
 })
 
@@ -289,10 +380,27 @@ const updateCart = asyncHandler(async (req, res) => {
     
 })
 
+const createUsers = asyncHandler(async (req, res) => {
+    // 1. Kiểm tra nếu mảng rỗng
+    if (!users_data || users_data.length === 0) {
+        return res.status(400).json({ success: false, mes: 'No data provided' })
+    }
+
+    // 2. Sử dụng insertMany để chèn hàng loạt
+    const response = await User.insertMany(users_data)
+
+    return res.status(200).json({
+        success: response ? true : false,
+        data: response ? response : 'Something went wrong'
+    })
+})
+
+
 module.exports = {
     register, login, getCurrent, 
     refreshAccessToken, logout, 
     forgotPassword, resetPassword,
     getUsers, deleteUser, updateUser, updateUserByAdmin,
-    updateUserAddress, updateCart, finalRegister
+    updateUserAddress, updateCart, finalRegister,
+    createUsers, deleteUserByAdmin
 }

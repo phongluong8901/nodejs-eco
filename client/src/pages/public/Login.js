@@ -1,13 +1,15 @@
 import React, { useState, useCallback } from 'react'
-import { InputField, Button } from '../../components'
+import { InputField, Loading, Button } from '../../components'
 import { apiRegister, apiLogin, apiForgotPassword } from '../../apis/user'
 import Swal from 'sweetalert2'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import path from '../../ultils/path'
 import { login } from '../../store/user/userSlice'
 import { useDispatch } from 'react-redux'
 import { toast } from 'react-toastify'
 import { validate } from '../../ultils/helpers' 
+import { showModal } from '../../store/app/appSlice'
+
 
 
 const Login = () => {   
@@ -50,37 +52,44 @@ const Login = () => {
     // console.log(validate(payload))
 
     const handleSubmit = useCallback(async () => {
-    const { firstname, lastname, mobile, ...data } = payload;
+        const { firstname, lastname, mobile, ...data } = payload;
+        setInvalidFields([]);
+        
+        const invalids = isRegister 
+            ? validate(payload, setInvalidFields) 
+            : validate(data, setInvalidFields);
 
-    // QUAN TRỌNG: Reset lỗi cũ và truyền đủ 2 tham số
-    setInvalidFields([]);
-    const invalids = isRegister 
-        ? validate(payload, setInvalidFields) 
-        : validate(data, setInvalidFields);
+        if (invalids === 0) {
+            // BẮT ĐẦU HIỆN LOADING
+            dispatch(showModal({ isShowModal: true, modalChildren: <Loading /> }));
 
-    // Chỉ gọi API khi không có lỗi (invalids === 0)
-    if (invalids === 0) {
-        if (isRegister) {
-            const response = await apiRegister(payload);
-            if (response.success) {
-                Swal.fire("Congratulations", response?.mes, 'success').then(() => {
-                    setIsRegister(false);
-                    resetPayload();
-                });
+            if (isRegister) {
+                const response = await apiRegister(payload);
+                // TẮT LOADING SAU KHI CÓ KẾT QUẢ API
+                dispatch(showModal({ isShowModal: false, modalChildren: null }));
+
+                if (response.success) {
+                    Swal.fire("Congratulations", response?.mes, 'success').then(() => {
+                        setIsRegister(false);
+                        resetPayload();
+                    });
+                } else {
+                    Swal.fire("Oops!", response?.mes, 'error');
+                }
             } else {
-                Swal.fire("Oops!", response?.mes, 'error');
-            }
-        } else {
-            const rs = await apiLogin(data);
-            if (rs.success) {
-                dispatch(login({ isLoggedIn: true, token: rs.accessToken, userData: rs.userData }));
-                navigate(`/${path.HOME}`);
-            } else {
-                Swal.fire("Oops!", rs?.mes, 'error');
+                const rs = await apiLogin(data);
+                // TẮT LOADING SAU KHI CÓ KẾT QUẢ API
+                dispatch(showModal({ isShowModal: false, modalChildren: null }));
+
+                if (rs.success) {
+                    dispatch(login({ isLoggedIn: true, token: rs.accessToken, userData: rs.userData }));
+                    navigate(`/${path.HOME}`);
+                } else {
+                    Swal.fire("Oops!", rs?.mes, 'error');
+                }
             }
         }
-    }
-}, [payload, isRegister, dispatch, navigate]);
+    }, [payload, isRegister, dispatch, navigate]);
 
     return (
         <div className='w-screen h-screen relative'>
@@ -181,6 +190,7 @@ const Login = () => {
                         onClick={() => setIsRegister(false)}
                         className='text-blue-500 hover:underline cursor-pointer w-full text-center'>Go to Login</span>}
                     </div>
+                    <Link to={`/${path.HOME}`} className='text-blue-500 hover:underline cursor-pointer flex w-full justify-center'>Go home?</Link>
                 </div>
             </div>
         </div>

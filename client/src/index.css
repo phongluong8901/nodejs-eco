@@ -4,40 +4,114 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Bạn có thể thêm các style tùy chỉnh khác tại đây nếu cần */
+/* ============================================================ */
+/* CUSTOM SLIDER TRANG DETAIL (VIDEO 40)                       */
+/* ============================================================ */
 
-button.slick-prev {
-    left: 20px;
+/* 1. Định vị chung cho nút Prev và Next */
+.image-slider .slick-prev,
+.image-slider .slick-next {
+    width: 35px;
+    height: 35px;
     z-index: 10;
+    /* Bỏ màu mặc định của thư viện */
+    background: transparent; 
 }
 
-button.slick-next {
-    right: 80px;
-    z-index: 10;
+/* 2. Căn lề nút cho sát mép ảnh */
+.image-slider .slick-prev {
+    left: 5px !important;
 }
 
-button.slick-next::before {
-    color: grey;
-    content: '\276F';
-    background: #ffd3d3;
-    width: 80px;
-    height: 80px;
-    font-size: 30px;
-    display: inline-block;
+.image-slider .slick-next {
+    right: 5px !important;
+}
+
+/* 3. Tạo hình dáng nút (Hình tròn, màu hồng nhạt giống code bạn hoặc xám giống video) */
+.image-slider .slick-prev::before,
+.image-slider .slick-next::before {
+    font-size: 20px;
+    color: #555; /* Màu mũi tên */
+    background-color: #ffd3d3; /* Màu nền nút (bạn có thể đổi thành #f1f1f1 nếu muốn giống video hơn) */
+    width: 35px;
+    height: 35px;
     display: flex;
     justify-content: center;
     align-items: center;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    opacity: 0.8;
+    transition: all 0.3s;
 }
 
-button.slick-prev::before {
-   color: grey;
-    content: '\276E';
-    background: #ffd3d3;
-    width: 80px;
-    height: 80px;
-    font-size: 30px;
-    display: inline-block;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* 4. Icon mũi tên chuẩn */
+.image-slider .slick-prev::before {
+    content: '\276E' !important; /* Dấu < */
+}
+
+.image-slider .slick-next::before {
+    content: '\276F' !important; /* Dấu > */
+}
+
+/* 5. Hiệu ứng Hover */
+.image-slider .slick-prev:hover::before,
+.image-slider .slick-next:hover::before {
+    opacity: 1;
+    background-color: #ffbaba; /* Đậm hơn khi hover */
+    color: black;
+}
+
+/* 6. Ẩn nút khi không thể bấm được nữa (Video 40 dùng infinite: false) */
+.image-slider .slick-disabled {
+    display: none !important;
+}
+
+/* 7. Đảm bảo ảnh con không bị dính sát nhau */
+.image-slider .px-1 {
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+/* Đảm bảo cửa sổ zoom hiện đúng vị trí và có bóng đổ cho đẹp */
+.js-enlarged-image-container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 105% !important; /* Đẩy sang phải 105% so với ảnh gốc */
+    z-index: 1000 !important;
+    background: white !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 1px solid #ddd !important;
+}
+
+/* Chống nhảy khung ảnh chính khi đổi ảnh */
+.w-full.h-\[458px\] div {
+    height: 100% !important;
+}
+
+.w-full.h-\[458px\] img {
+    object-fit: contain !important;
+    max-height: 458px !important;
+}
+
+/* Custom nút Prev/Next của Slider cho đẹp */
+.image-slider .slick-prev,
+.image-slider .slick-next {
+    width: 30px;
+    height: 30px;
+    z-index: 10;
+    background-color: #f1f1f1 !important;
+    border-radius: 50%;
+}
+
+.image-slider .slick-prev { left: 5px !important; }
+.image-slider .slick-next { right: 5px !important; }
+
+.image-slider .slick-prev::before,
+.image-slider .slick-next::before {
+    color: #333;
+    font-size: 20px;
+}
+
+.w500{
+    width: 500px;
 }

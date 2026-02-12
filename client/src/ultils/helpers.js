@@ -1,5 +1,6 @@
 import icons from "./icons"
 
+
 const {AiOutlineStar, AiFillStar} = icons
 
 export const createSlug = string => string.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(' ').join('-')
@@ -29,3 +30,20 @@ export const validate = (payload, setInvalidFields) => {
     // Bạn có thể thêm validate email/password ở đây nếu muốn
     return invalids;
 };
+
+export const fortmatPrice = number => Math.round(number /1000) * 1000
+
+export const generaterange = (start, end) => {
+    const length = end + 1 - start
+    return Array.from({length}, (_, index) => start + index)
+}
+
+export const getBase64 = (file) => {
+    if (!file) return ''
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}

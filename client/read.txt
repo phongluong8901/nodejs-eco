@@ -26,4 +26,14 @@ npm i @tailwindcss/line-clamp
 
 npm i sweetalert2
 npm install --save react-toastify
+
+npm install use-react-router-breadcrumbs
+npm install react-image-magnifiers --legacy-peer-deps
+npm install react-image-magnify --legacy-peer-deps
+npm i react-masonry-css
+
+ npm i moment --legacy-peer-deps
+ npm install react-spinners --legacy-peer-deps
+ npm i react-hook-form
+ npm install @tinymce/tinymce-react --legacy-peer-deps
 --- run

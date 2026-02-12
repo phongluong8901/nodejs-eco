@@ -10,6 +10,18 @@ npm run dev
 -- install
 npm i express-async-handler dotenv jsonwebtoken mongoose bcrypt 
 
+npm i cookie-parser
+
+npm i nodemailer
+
+npm i slugify
+
+npm install cloudinary multer multer-storage-cloudinary
+
+npm i cors
+
+npm i uniqid
+
 -- theem git quan ly
 git init
 
@@ -30,4 +42,10 @@ git push
 
 -- keo code tu github ve local
 git pull origin
+
+--- keo code tu github -> scapring (CMD)
+git clone https://github.com/hip06/scraping-data.git
+
+--- cai thu vien vscode
+rest client
 

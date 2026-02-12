@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { apiGetCategories } from '../apis/app'
+import { apiGetCategories } from '../../apis/app'
 import { NavLink } from 'react-router-dom'
-import { createSlug } from '../ultils/helpers'
+import { createSlug } from '../../ultils/helpers'
 
 const Sidebar = () => {
     const [categories, setCategories] = useState(null)
@@ -26,8 +26,7 @@ const Sidebar = () => {
             {categories?.map(el => (
                 <NavLink
                     key={createSlug(el.title)}
-                    to={createSlug(el.title)}
-                    // Fix lỗi return ở đây bằng cách dùng ngoặc tròn ()
+                    to={`/${createSlug(el.title)}`} // THÊM DẤU / Ở ĐÂY
                     className={({ isActive }) => 
                         isActive 
                         ? 'bg-main text-white px-5 pt-[15px] pb-[14px] text-sm' 

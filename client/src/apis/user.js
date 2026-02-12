@@ -24,3 +24,36 @@ export const apiResetPassword = (data) =>axios({
     method: 'put',
     data
 })
+
+export const apiGetCurrent = (data) =>axios({
+    url: '/user/current',
+    method: 'get',
+})
+
+
+export const apiGetUsers = (params) =>axios({
+    url: '/user/',
+    method: 'get',
+    params
+})
+
+// Hàm cập nhật thông tin user (dành cho Admin)
+export const apiUpdateUserByAdmin = (data, uid) => axios({
+    url: '/user/' + uid,
+    method: 'put',
+    data
+})
+
+// Hàm xóa user (dành cho Admin)
+export const apiDeleteUserByAdmin = (uid) => axios({
+    url: '/user/' + uid,
+    method: 'delete'
+})
+
+// Hàm cập nhật thông tin user (dành cho User)
+export const apiUpdateCurrent = (data) => axios({
+    url: '/user/current',
+    method: 'put',
+    data
+})
+

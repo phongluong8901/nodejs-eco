@@ -6,11 +6,14 @@ export const appSlice = createSlice({
     initialState: {
         categories: null,
         isLoading: false,
-        errorMessage: '' // Nên thêm field này vào initialState để quản lý lỗi
+        errorMessage: '', // Nên thêm field này vào initialState để quản lý lỗi
+        isShowModal: false,
+        modalChildren: null,
     },
     reducers: {
-        logout: (state) => {
-            state.isLoading = false;
+        showModal: (state, action) => {
+            state.isShowModal = action.payload.isShowModal
+            state.modalChildren =action.payload.modalChildren
         }
     },
     extraReducers: (builder) => {
@@ -34,6 +37,6 @@ export const appSlice = createSlice({
     }
 });
 
-export const { logout } = appSlice.actions;
+export const { showModal } = appSlice.actions;
 
 export default appSlice.reducer;

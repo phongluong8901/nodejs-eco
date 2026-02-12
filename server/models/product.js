@@ -50,17 +50,35 @@ var productSchema = new mongoose.Schema({
         type:String,
         ebum: ['Black', 'Grown', 'Red']     // cac mau cho truoc, chi trong day
     },
+    variants: [
+        {
+            color: String,
+            price: Number,
+            thumb: String,
+            images: Array,
+            title: String,
+            sku: String // Mã sản phẩm cho từng biến thể nếu cần
+        }
+    ],
     ratings:[
         {
             star: {type: Number},
             postedBy: {type: mongoose.Types.ObjectId, ref: 'User'},
-            comment: {type: String}
+            comment: {type: String},
+            updateAt: {
+                type: Date,
+                default: Date.now()
+            }
         }
     ],
     totalRatings: {
         type: Number,
         default: 0
-    }
+    },
+    createdBy: {
+        type: mongoose.Types.ObjectId,
+        ref: 'User'
+    },
 }, {
     timestamps: true
 }

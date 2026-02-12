@@ -1,11 +1,11 @@
 import React, {useState} from 'react'
-import {formartMoney} from '../ultils/helpers'
-import label from '../assets/label.png'
-import { renderStarFromNumber } from '../ultils/helpers'
-import {SelectOption} from './'
-import icons from '../ultils/icons'
+import {formartMoney} from '../../ultils/helpers'
+import label from '../../assets/label.png'
+import { renderStarFromNumber } from '../../ultils/helpers'
+import {SelectOption} from '..'
+import icons from '../../ultils/icons'
 import { Link } from 'react-router-dom'
-import path from '../ultils/path'
+import path from '../../ultils/path'
 
 const {AiFillEye,
     AiOutlineMenu,
@@ -18,7 +18,7 @@ const Product = ({productData}) => {
 
                 
             <Link className='w-full border p-[15px] flex flex-col items-center'
-            to={`/${path.DETAIL_PRODUCT}/${productData?._id}/${productData?.title}`}
+            to={`/${productData?.category?.toLowerCase()}/${productData?._id}/${productData?.title}`}
             onMouseEnter={e => {
                 e.stopPropagation()
                 setIsShowOption(true)
@@ -38,9 +38,10 @@ const Product = ({productData}) => {
                     </div>
                     }
                     <img 
-                    src={productData?.images[0] || "https://cajasgraf.com.ar/productos/details.php?set_lang=en"} 
-                    alt="" 
-                    className='w-full h-[274px] object-cover'/>
+                        src={productData?.thumb || productData?.images[0] || "https://via.placeholder.com/274"} 
+                        alt={productData?.title} 
+                        className='w-full h-[274px] object-cover'
+                    />
                     <span className='font-bold top-0 left-0 w-[70px] h-[25px] absolute z-10 text-[10px]'>New</span>
                     <img src={label} alt="" className='absolute top-0 left-[-16px] w-[70px] h-[25px] object-cover' />
                 </div>

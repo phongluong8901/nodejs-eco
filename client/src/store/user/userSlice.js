@@ -1,40 +1,57 @@
-import { createSlice, current } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit"; // Bỏ import 'current' bị thừa
+import * as actions from "./asyncActions";
 
 export const userSlice = createSlice({
     name: 'user',
     initialState: {
         isLoggedIn: false,
         current: null,
-        token: null
+        token: null,
+        isLoading: false,
+        mes: '',
     },
     reducers: {
         login: (state, action) => {
             state.isLoggedIn = action.payload.isLoggedIn
-            state.current = action.payload.userData
             state.token = action.payload.token
+        },
+        logout: (state) => {
+            state.isLoggedIn = false
+            state.token = null
+            state.current = null
+            state.isLoading = false
+            state.mes = ''
+        },
+        // Thêm action này để xóa thông báo sau khi hiện Alert xong
+        clearMessage: (state) => {
+            state.mes = ''
         }
     },
-    // extraReducers: (builder) => {
-    //     // Khi đang gọi API
-    //     builder.addCase(actions.getCategories.pending, (state) => {
-    //         state.isLoading = true;
-    //     });
+    extraReducers: (builder) => {
+        // Khi đang gọi API
+        builder.addCase(actions.getCurrent.pending, (state) => {
+            state.isLoading = true;
+        });
 
-    //     // Khi gọi API thành công
-    //     builder.addCase(actions.getCategories.fulfilled, (state, action) => {
-    //         state.isLoading = false;
-    //         state.categories = action.payload;
-    //     });
+        // Khi gọi API thành công
+        builder.addCase(actions.getCurrent.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.current = action.payload;
+        });
 
-    //     // Khi gọi API thất bại - SỬA TẠI ĐÂY
-    //     builder.addCase(actions.getCategories.rejected, (state, action) => {
-    //         state.isLoading = false;
-    //         // Sử dụng Optional Chaining (?.) và giá trị mặc định để tránh lỗi undefined
-    //         state.errorMessage = action.payload?.message || action.error?.message || 'Something went wrong';
-    //     });
-    // }
+        // XỬ LÝ KHI PHIÊN ĐĂNG NHẬP HẾT HẠN (API REJECTED)
+        builder.addCase(actions.getCurrent.rejected, (state, action) => {
+            state.isLoading = false;
+            state.current = null;
+            state.isLoggedIn = false;
+            state.token = null;
+            // Gán thông báo lỗi để TopHeader bắt được
+            state.mes = 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.'
+        });
+    }
 });
 
-export const { login } = userSlice.actions;
+// Nhớ export thêm clearMessage nhé!
+export const { login, logout, clearMessage } = userSlice.actions;
 
 export default userSlice.reducer;

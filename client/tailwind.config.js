@@ -12,6 +12,13 @@ module.exports = {
       backgroundColor: {
         main: '#ee3131'
       },
+      listStyleType: {
+        square: 'square',
+        disc: 'disc',
+        decimal: 'decimal',
+        none: 'none',
+        roman: 'upper-roman'
+      },
       colors: {
         main: '#ee3131',
         overlay: 'rgb(0,0,0,0.3)'
