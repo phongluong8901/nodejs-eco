@@ -47,3 +47,8 @@ export const getBase64 = (file) => {
         reader.onerror = error => reject(error);
     });
 }
+
+export const formatMoney = number => {
+    if (!Number(number)) return 0
+    return Number(number.toFixed(1)).toLocaleString()
+}

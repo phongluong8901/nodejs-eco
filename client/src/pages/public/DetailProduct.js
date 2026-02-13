@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { apiGetProduct, apiGetProducts, apiRatings } from '../../apis'
+import { apiGetProduct, apiGetProducts, apiRatings, apiUpdateCart } from '../../apis'
 import {
     Breadcrumb,
     Button,
@@ -15,8 +15,10 @@ import { formartMoney, renderStarFromNumber } from '../../ultils/helpers'
 import { productExtraInformation } from '../../ultils/constant'
 import { useDispatch, useSelector } from 'react-redux'
 import { showModal } from '../../store/app/appSlice'
+import { getCurrent } from '../../store/user/asyncActions'
 import Swal from 'sweetalert2'
 import path from '../../ultils/path'
+import { toast } from 'react-toastify'
 
 const settings = {
     dots: false,
@@ -30,7 +32,7 @@ const DetailProduct = () => {
     const { pid, title, category } = useParams()
     const navigate = useNavigate()
     const dispatch = useDispatch()
-    const { isLoggedIn } = useSelector(state => state.user)
+    const { isLoggedIn, current } = useSelector(state => state.user)
 
     const [product, setProduct] = useState(null)
     const [relatedProducts, setRelatedProducts] = useState(null)
@@ -39,13 +41,13 @@ const DetailProduct = () => {
     const [isZoom, setIsZoom] = useState(false)
     const zoomRef = useRef()
 
-    // STATE QUẢN LÝ BIẾN THỂ ĐANG CHỌN
     const [currentVariant, setCurrentVariant] = useState(null)
     const [currentData, setCurrentData] = useState({
         title: '',
         price: '',
         thumb: '',
-        images: []
+        images: [],
+        color: ''
     })
 
     const fetchProductData = useCallback(async () => {
@@ -53,12 +55,12 @@ const DetailProduct = () => {
         if (response.success) {
             setProduct(response.productData)
             setCurrentImage(response.productData?.thumb)
-            // Khởi tạo dữ liệu hiển thị ban đầu là của sản phẩm gốc
             setCurrentData({
                 title: response.productData?.title,
                 price: response.productData?.price,
                 thumb: response.productData?.thumb,
-                images: response.productData?.images
+                images: response.productData?.images,
+                color: response.productData?.color
             })
             const responseRelated = await apiGetProducts({ category: response.productData?.category })
             if (responseRelated.success) setRelatedProducts(responseRelated.products)
@@ -70,7 +72,6 @@ const DetailProduct = () => {
         window.scrollTo(0, 0)
     }, [pid, fetchProductData])
 
-    // LOGIC: Khi người dùng đổi biến thể (chọn màu)
     useEffect(() => {
         if (currentVariant) {
             const selected = product?.variants?.find(el => el.sku === currentVariant)
@@ -79,21 +80,50 @@ const DetailProduct = () => {
                     title: selected.title,
                     price: selected.price,
                     thumb: selected.thumb,
-                    images: selected.images
+                    images: selected.images,
+                    color: selected.color
                 })
                 setCurrentImage(selected.thumb)
             }
         } else {
-            // Quay về dữ liệu gốc
             setCurrentData({
                 title: product?.title,
                 price: product?.price,
                 thumb: product?.thumb,
-                images: product?.images
+                images: product?.images,
+                color: product?.color
             })
             setCurrentImage(product?.thumb)
         }
     }, [currentVariant, product])
+
+    // --- LOGIC ADD TO CART ---
+    const handleAddToCart = async () => {
+        if (!isLoggedIn) {
+            return Swal.fire({
+                title: 'Almost there!',
+                text: 'Please login to add products to your cart',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Go to Login'
+            }).then((result) => {
+                if (result.isConfirmed) navigate(`/${path.LOGIN}`)
+            })
+        }
+
+        const response = await apiUpdateCart({
+            pid,
+            quantity,
+            color: currentData.color
+        })
+
+        if (response.success) {
+            toast.success(response.mes)
+            dispatch(getCurrent()) // Update lại giỏ hàng để Sidebar Cart nhảy số ngay
+        } else {
+            toast.error(response.mes)
+        }
+    }
 
     const handleSubmitVoteOption = async ({ comment, score }) => {
         if (!comment || !score) {
@@ -184,7 +214,7 @@ const DetailProduct = () => {
 
                 <div className='w-2/5 pl-8 pr-4 flex flex-col gap-4'>
                     <h2 className='text-[30px] font-semibold text-main'>
-                        {currentData.price ? `${formartMoney(currentData.price)} VND` : '0 VND'}
+                        {`${formartMoney(currentData.price || 0)} VND`}
                     </h2>
                     <div className='flex items-center gap-2'>
                         <div className='flex items-center text-yellow-500'>
@@ -195,11 +225,9 @@ const DetailProduct = () => {
                         <span className='text-sm text-gray-400 italic'>{`(Sold: ${product?.sold || 0})`}</span>
                     </div>
 
-                    {/* --- PHẦN CHỌN BIẾN THỂ (VARIANTS) --- */}
                     <div className='my-4 flex flex-col gap-3'>
                         <span className='font-bold uppercase text-sm'>Color</span>
                         <div className='flex flex-wrap gap-2 items-center'>
-                            {/* Nút màu gốc */}
                             <div 
                                 onClick={() => setCurrentVariant(null)}
                                 className={`flex items-center gap-2 p-2 border cursor-pointer ${!currentVariant ? 'border-main' : 'border-gray-200'}`}
@@ -207,7 +235,6 @@ const DetailProduct = () => {
                                 <img src={product?.thumb} alt="thumb" className='w-8 h-8 object-cover rounded-sm' />
                                 <span className='text-xs uppercase'>{product?.color}</span>
                             </div>
-                            {/* Danh sách biến thể */}
                             {product?.variants?.map(el => (
                                 <div 
                                     key={el.sku}
@@ -221,11 +248,18 @@ const DetailProduct = () => {
                         </div>
                     </div>
 
-                    <ul className='list-square text-sm text-gray-500 pl-4'>
-                        {product?.description?.map((el, index) => (
-                            <li className='leading-6' key={index}>{el}</li>
-                        ))}
-                    </ul>
+                    <div className='text-sm text-gray-500'>
+                        {Array.isArray(product?.description) ? (
+                            <ul className='list-square pl-4'>
+                                {product?.description?.map((el, index) => (
+                                    <li className='leading-6' key={index}>{el}</li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <div dangerouslySetInnerHTML={{ __html: product?.description }}></div>
+                        )}
+                    </div>
+
                     <div className='flex flex-col gap-8 mt-4'>
                         <SelectQuantity 
                             quantity={quantity}
@@ -235,7 +269,7 @@ const DetailProduct = () => {
                                 if (flag === 'plus') setQuantity(prev => prev + 1)
                             }}
                         />
-                        <Button fw>ADD TO CART</Button>
+                        <Button handleOnClick={handleAddToCart} fw>ADD TO CART</Button>
                     </div>
                 </div>
 
@@ -245,7 +279,21 @@ const DetailProduct = () => {
                     ))}
                 </div>
             </div>
-            {/* ... (Phần ProductInfomation và RelatedProducts giữ nguyên) */}
+            
+            <div className='w-main mx-auto mt-8'>
+                <ProductInfomation 
+                    totalRatings={product?.totalRatings} 
+                    ratings={product?.ratings} 
+                    nameProduct={product?.title}
+                    pid={product?._id}
+                    rerender={fetchProductData}
+                />
+            </div>
+
+            <div className='w-main mx-auto mb-10'>
+                <h3 className='text-[20px] font-semibold py-[15px] border-b-2 border-main uppercase'>Other Customers also buy</h3>
+                <CustomSlider products={relatedProducts} normal={true} />
+            </div>
         </div>
     )
 }

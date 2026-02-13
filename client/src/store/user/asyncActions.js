@@ -4,14 +4,16 @@ import * as apis from "../../apis"; // Giả định đường dẫn tới folde
 export const getCurrent = createAsyncThunk(
     'user/current', 
     async (data, { rejectWithValue }) => {
-        // PHẢI GỌI API GET_CURRENT, KHÔNG PHẢI CATEGORIES
         const response = await apis.apiGetCurrent(); 
         
         if (!response.success) {
             return rejectWithValue(response);
         }
 
-        // Trả về dữ liệu user (thường là response.rs hoặc response.userData)
-        return response.rs; 
+        // --- DEBUG Ở ĐÂY ---
+        console.log('Dữ liệu từ API Backend:', response); 
+        // Xem trong Console: nó là response.rs, response.userData hay response.user?
+        
+        return response.rs; // <-- Kiểm tra xem có đúng là trường "rs" không nhé
     }
 );

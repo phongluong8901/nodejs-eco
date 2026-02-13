@@ -39,3 +39,4 @@ export const apiAddVariant = (data, pid) => axios({
     method: 'put',
     data
 })
+

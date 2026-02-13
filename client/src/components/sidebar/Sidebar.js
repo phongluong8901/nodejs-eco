@@ -26,7 +26,8 @@ const Sidebar = () => {
             {categories?.map(el => (
                 <NavLink
                     key={createSlug(el.title)}
-                    to={`/${createSlug(el.title)}`} // THÊM DẤU / Ở ĐÂY
+                    // Sửa ở đây: Thêm products/ vào trước slug
+                    to={`/products/${createSlug(el.title)}`} 
                     className={({ isActive }) => 
                         isActive 
                         ? 'bg-main text-white px-5 pt-[15px] pb-[14px] text-sm' 

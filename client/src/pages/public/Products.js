@@ -9,7 +9,7 @@ const breakpointColumnsObj = { default: 4, 1100: 3, 700: 2, 500: 1 };
 
 const Products = () => {
     const [products, setProducts] = useState(null)
-    const [counts, setCounts] = useState(0) // Lưu tổng số sản phẩm để phân trang
+    const [counts, setCounts] = useState(0)
     const [activeClick, setActiveClick] = useState(null)
     const { category } = useParams()
     const [params] = useSearchParams()
@@ -20,22 +20,36 @@ const Products = () => {
         const response = await apiGetProducts(queries)
         if (response.success) {
             setProducts(response.products)
-            setCounts(response.counts) // Quan trọng: Lưu counts từ API trả về
+            setCounts(response.counts)
         }
     }
 
     useEffect(() => {
+        // 1. Chuyển đổi params từ URL thành object
         const queries = Object.fromEntries([...params])
-        if (category && category !== 'products') queries.category = category
-        else delete queries.category
-
-        const priceQuery = {}
-        if (queries.from) priceQuery.gte = queries.from
-        if (queries.to) priceQuery.lte = queries.to
-        if (Object.keys(priceQuery).length > 0) queries.price = priceQuery
         
-        delete queries.from
-        delete queries.to
+        // 2. Xử lý Category: 
+        // Nếu category là chữ ':category' (lỗi route) hoặc 'products' (xem tất cả) thì xóa filter category
+        if (category && category !== 'products' && !category.startsWith(':')) {
+            queries.category = category
+        } else {
+            delete queries.category
+        }
+
+        // 3. Logic lọc giá (Price): Chuyển from/to thành price[gte]/price[lte] để Backend hiểu
+        if (queries.from) {
+            queries['price[gte]'] = queries.from
+            delete queries.from
+        }
+        if (queries.to) {
+            queries['price[lte]'] = queries.to
+            delete queries.to
+        }
+
+        // 4. Dọn dẹp các tham số rỗng hoặc undefined
+        Object.keys(queries).forEach(key => {
+            if (!queries[key] || queries[key] === 'undefined') delete queries[key]
+        })
 
         fetchProductByCategory(queries)
         window.scrollTo(0, 0)
@@ -50,8 +64,12 @@ const Products = () => {
         <div className='w-full'>
             <div className='h-[81px] bg-gray-100 flex items-center justify-center mb-8'>
                 <div className='w-main'>
-                    <h3 className='font-bold uppercase'>{category === 'products' ? 'All Products' : category}</h3>
-                    <Breadcrumb category={category} />
+                    <h3 className='font-bold uppercase'>
+                        {(!category || category === 'products' || category.startsWith(':')) 
+                            ? 'All Products' 
+                            : category}
+                    </h3>
+                    <Breadcrumb category={category?.startsWith(':') ? 'Products' : category} />
                 </div>
             </div>
 
@@ -93,25 +111,30 @@ const Products = () => {
                 </div>
             </div>
 
-            <div className='mt-8 w-main m-auto'>
-                <Masonry
-                    breakpointCols={breakpointColumnsObj}
-                    className="my-masonry-grid flex ml-[-16px]"
-                    columnClassName="my-masonry-grid_column pl-[16px]"
-                >
-                    {products?.map(el => (
-                        <div key={el._id} className='mb-[20px]'>
-                             <Product
-                                pid={el._id}
-                                productData={el}
-                                normal={true}
-                            />
-                        </div>
-                    ))}
-                </Masonry>
+            <div className='mt-8 w-main m-auto min-h-[500px]'>
+                {products?.length > 0 ? (
+                    <Masonry
+                        breakpointCols={breakpointColumnsObj}
+                        className="my-masonry-grid flex ml-[-16px]"
+                        columnClassName="my-masonry-grid_column pl-[16px]"
+                    >
+                        {products?.map(el => (
+                            <div key={el._id} className='mb-[20px]'>
+                                <Product
+                                    pid={el._id}
+                                    productData={el}
+                                    normal={true}
+                                />
+                            </div>
+                        ))}
+                    </Masonry>
+                ) : (
+                    <div className='w-full text-center italic text-gray-500 py-10'>
+                        No products found.
+                    </div>
+                )}
             </div>
 
-            {/* PHẦN PHÂN TRANG */}
             <div className='w-main m-auto my-10 flex justify-end'>
                 <Pagination totalCount={counts} />
             </div>

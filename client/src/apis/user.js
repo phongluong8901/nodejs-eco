@@ -57,3 +57,49 @@ export const apiUpdateCurrent = (data) => axios({
     data
 })
 
+export const apiUpdateCart = (data) => axios({
+    url: '/user/cart',
+    method: 'put',
+    data
+})
+
+export const apiRemoveCart = (pid, color) => axios({
+    url: `/user/remove-cart/${pid}/${color}`,
+    method: 'delete'
+})
+
+
+export const apiCreateOrder = (data) => axios({
+    url: '/order/', 
+    method: 'post',
+    data
+})
+
+export const apiGetUserOrder = () => axios({ 
+    url: '/order/',
+    method: 'get' 
+})
+
+export const apiGetOrders = (params) => axios({
+    url: '/order/admin', 
+    method: 'get',
+    params 
+})
+
+// API cập nhật trạng thái đơn hàng (Admin)
+export const apiUpdateStatusOrder = (oid, data) => axios({
+    url: '/order/status/' + oid,
+    method: 'put',
+    data // data sẽ là { status: 'Succeed' } hoặc { status: 'Cancelled' }
+});
+
+// Tiện tay thêm luôn hàm Xóa đơn hàng nếu bạn chưa có
+export const apiDeleteOrder = (oid) => axios({
+    url: '/order/' + oid,
+    method: 'delete'
+});
+
+export const apiUpdateWishlist = (pid) => axios({
+    url: '/user/wishlist/' + pid, 
+    method: 'put'
+})

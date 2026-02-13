@@ -20,11 +20,13 @@ const FeatureProducts = () => {
             <div className='flex flex-wrap mt=[15px]'>
                 {products?.map(el => (
                     <ProductCard 
-                    key={el.id} 
-                    image={el.thumb}
-                    title={el.title}
-                    totalRatings={el.totalRatings}
-                    price={el.price}
+                        key={el._id}        // Sửa el.id thành el._id
+                        pid={el._id}        // BẮT BUỘC: Phải truyền pid để ProductCard có ID làm QuickView
+                        image={el.thumb}
+                        title={el.title}
+                        totalRatings={el.totalRatings}
+                        price={el.price}
+                        category={el.category} // Nên truyền thêm category để QuickView load nhanh hơn
                     />
                 ))}
             </div>

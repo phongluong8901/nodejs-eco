@@ -36,4 +36,7 @@ npm i react-masonry-css
  npm install react-spinners --legacy-peer-deps
  npm i react-hook-form
  npm install @tinymce/tinymce-react --legacy-peer-deps
+
+ npm i @paypal/react-paypal-js --legacy-peer-deps
+ npm install chart.js react-chartjs-2 --legacy-peer-deps
 --- run

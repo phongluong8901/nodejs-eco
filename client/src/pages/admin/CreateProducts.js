@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import { InputForm, Select, MarkdownEditor, Loading } from '../../components'
+import { InputForm, Select, MarkdownEditor, Loading, Button } from '../../components'
 import { useForm } from 'react-hook-form'
 import { useSelector } from 'react-redux'
 import { validate, getBase64 } from '../../ultils/helpers'
 import { toast } from 'react-toastify'
 import { apiCreateProduct } from '../../apis'
-import { IoTrashBinOutline } from 'react-icons/io5'
+import { IoTrashBinOutline, IoCloudUploadOutline } from 'react-icons/io5'
 
 const CreateProducts = () => {
     const { categories } = useSelector(state => state.app)
@@ -20,12 +20,11 @@ const CreateProducts = () => {
     const [invalidFields, setInvalidFields] = useState([])
     const [isLoading, setIsLoading] = useState(false)
 
-    // Đồng bộ nội dung từ MarkdownEditor vào state payload
     const changeValue = useCallback((content) => {
         setPayload(prev => ({ ...prev, description: content }))
     }, [])
 
-    // --- XỬ LÝ PREVIEW ẢNH ---
+    // --- PREVIEW LOGIC ---
     const watchThumb = watch('thumb')
     const watchImages = watch('images')
 
@@ -57,11 +56,10 @@ const CreateProducts = () => {
         handlePreviewImages()
     }, [watchImages])
 
-    // Hàm xóa ảnh preview và đồng bộ lại FileList
     const handleRemoveImage = (name) => {
         const files = [...watchImages]
         const newFiles = files.filter(el => el.name !== name)
-        setValue('images', newFiles) // Cập nhật lại giá trị trong hook-form
+        setValue('images', newFiles)
         setPreview(prev => ({ ...prev, images: prev.images.filter(el => el.name !== name) }))
     }
 
@@ -71,7 +69,6 @@ const CreateProducts = () => {
         if (invalids === 0) {
             if (data.category) data.category = categories?.find(el => el._id === data.category)?.title
 
-            // Làm sạch description: bỏ thẻ HTML và &nbsp;
             const cleanDescription = payload.description
                 ?.replace(/<[^>]*>/g, '')
                 ?.replace(/&nbsp;/g, ' ')
@@ -112,79 +109,112 @@ const CreateProducts = () => {
     }
 
     return (
-        <div className='w-full relative'>
-            {isLoading && <div className='absolute inset-0 bg-white opacity-50 z-50 flex items-center justify-center'><Loading /></div>}
-            <h1 className='h-[75px] flex justify-between items-center text-3xl font-bold px-4 border-b uppercase'>
-                <span>Create product</span>
-            </h1>
+        <div className='w-full flex flex-col gap-4 bg-gray-50 min-h-screen relative'>
+            {isLoading && (
+                <div className='absolute inset-0 bg-white/60 z-[100] flex items-center justify-center backdrop-blur-sm'>
+                    <Loading />
+                </div>
+            )}
+            
+            <header className='h-[75px] flex justify-between items-center text-3xl font-extrabold px-4 border-b bg-white uppercase tracking-tight'>
+                <span>Create New Product</span>
+            </header>
 
-            <div className='p-4'>
-                <form onSubmit={handleSubmit(handleCreateProduct)}>
-                    <InputForm label='Name product' register={register} errors={errors} id='title' validate={{ required: 'Required' }} fullWidth />
-                    <div className='w-full grid grid-cols-3 gap-4 my-6'>
-                        <InputForm label='Price' register={register} errors={errors} id='price' validate={{ required: 'Required' }} fullWidth type='number' />
-                        <InputForm label='Quantity' register={register} errors={errors} id='quantity' validate={{ required: 'Required' }} fullWidth type='number' />
-                        <InputForm label='Color' register={register} errors={errors} id='color' validate={{ required: 'Required' }} fullWidth />
+            <div className='p-6'>
+                <form 
+                    onSubmit={handleSubmit(handleCreateProduct)}
+                    className='bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-6'
+                >
+                    <InputForm 
+                        label='Product Name' 
+                        register={register} 
+                        errors={errors} 
+                        id='title' 
+                        validate={{ required: 'Product name is required' }} 
+                        fullWidth 
+                        placeholder='Enter product name...'
+                    />
+
+                    <div className='w-full grid grid-cols-1 md:grid-cols-3 gap-6'>
+                        <InputForm label='Price (VND)' register={register} errors={errors} id='price' validate={{ required: 'Required' }} fullWidth type='number' placeholder='0' />
+                        <InputForm label='Stock Quantity' register={register} errors={errors} id='quantity' validate={{ required: 'Required' }} fullWidth type='number' placeholder='0' />
+                        <InputForm label='Default Color' register={register} errors={errors} id='color' validate={{ required: 'Required' }} fullWidth placeholder='e.g. Black, Space Gray' />
                     </div>
 
-                    <div className='w-full grid grid-cols-2 gap-4 my-6'>
+                    <div className='w-full grid grid-cols-1 md:grid-cols-2 gap-6'>
                         <Select label='Category' options={categories?.map(el => ({ code: el._id, value: el.title }))} register={register} id='category' validate={{ required: 'Required' }} errors={errors} fullWidth />
                         <Select label='Brand' options={categories?.find(el => el._id === watch('category'))?.brand?.map(item => ({ code: item, value: item }))} register={register} id='brand' errors={errors} fullWidth />
                     </div>
 
-                    <MarkdownEditor 
-                        name='description' 
-                        label='Description' 
-                        changeValue={changeValue} 
-                        value={payload.description} 
-                        invalidFields={invalidFields} 
-                        setInvalidFields={setInvalidFields} 
-                    />
-
-                    {/* Thumbnail Upload */}
-                    <div className='flex flex-col gap-2 mt-8 mb-4'>
-                        <label className='font-semibold' htmlFor='thumb'>Upload Thumb</label>
-                        <input type="file" id='thumb' {...register('thumb', { required: 'Required' })} />
-                        {errors['thumb'] && <small className='text-xs text-red-500'>{errors['thumb']?.message}</small>}
+                    <div className='mt-2'>
+                        <MarkdownEditor 
+                            name='description' 
+                            label='Product Description' 
+                            changeValue={changeValue} 
+                            value={payload.description} 
+                            invalidFields={invalidFields} 
+                            setInvalidFields={setInvalidFields} 
+                        />
                     </div>
-                    {preview.thumb && (
-                        <div className='my-4'>
-                            <img src={preview.thumb} alt="thumb" className='w-[200px] object-contain border' />
-                        </div>
-                    )}
 
-                    {/* Images Upload */}
-                    <div className='flex flex-col gap-2 mb-6'>
-                        <label className='font-semibold' htmlFor='images'>Upload Images Product</label>
-                        <input type="file" id='images' multiple {...register('images', { required: 'Required' })} />
-                        {errors['images'] && <small className='text-xs text-red-500'>{errors['images']?.message}</small>}
-                    </div>
-                    {preview.images.length > 0 && (
-                        <div className='my-4 flex flex-wrap gap-4'>
-                            {preview.images.map((el) => (
-                                <div 
-                                    key={el.name} 
-                                    onMouseEnter={() => setHover(el.name)} 
-                                    onMouseLeave={() => setHover(null)}
-                                    className='relative w-[150px] h-[150px] border rounded-md overflow-hidden'
-                                >
-                                    <img src={el.path} alt="product" className='w-full h-full object-cover' />
-                                    {hover === el.name && (
-                                        <div 
-                                            className='absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center cursor-pointer animate-scale-up-center'
-                                            onClick={() => handleRemoveImage(el.name)}
-                                        >
-                                            <IoTrashBinOutline size={24} color='white' />
-                                        </div>
-                                    )}
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-8 mt-4'>
+                        {/* Thumbnail Section */}
+                        <div className='flex flex-col gap-4'>
+                            <label className='font-bold text-gray-700 uppercase text-xs tracking-widest' htmlFor='thumb'>Main Thumbnail</label>
+                            <div className='relative border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-main transition-colors flex flex-col items-center justify-center bg-gray-50'>
+                                <input type="file" id='thumb' {...register('thumb', { required: 'Required' })} className='absolute inset-0 opacity-0 cursor-pointer' />
+                                <IoCloudUploadOutline size={32} className='text-gray-400' />
+                                <span className='text-sm text-gray-500 mt-2'>Click or drag to upload thumb</span>
+                            </div>
+                            {errors['thumb'] && <small className='text-xs text-red-500 font-medium'>{errors['thumb']?.message}</small>}
+                            {preview.thumb && (
+                                <div className='relative w-full aspect-video rounded-xl overflow-hidden border'>
+                                    <img src={preview.thumb} alt="thumb" className='w-full h-full object-cover' />
                                 </div>
-                            ))}
+                            )}
                         </div>
-                    )}
 
-                    <button type='submit' className='mt-8 px-8 py-3 rounded-md text-white bg-main font-semibold'>
-                        Create New Product
-                    </button>
+                        {/* Images Gallery Section */}
+                        <div className='flex flex-col gap-4'>
+                            <label className='font-bold text-gray-700 uppercase text-xs tracking-widest' htmlFor='images'>Product Gallery</label>
+                            <div className='relative border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-main transition-colors flex flex-col items-center justify-center bg-gray-50'>
+                                <input type="file" id='images' multiple {...register('images', { required: 'Required' })} className='absolute inset-0 opacity-0 cursor-pointer' />
+                                <IoCloudUploadOutline size={32} className='text-gray-400' />
+                                <span className='text-sm text-gray-500 mt-2'>Upload multiple product images</span>
+                            </div>
+                            {errors['images'] && <small className='text-xs text-red-500 font-medium'>{errors['images']?.message}</small>}
+                            
+                            <div className='grid grid-cols-3 gap-3'>
+                                {preview.images.map((el) => (
+                                    <div 
+                                        key={el.name} 
+                                        onMouseEnter={() => setHover(el.name)} 
+                                        onMouseLeave={() => setHover(null)}
+                                        className='relative aspect-square border rounded-lg overflow-hidden bg-white shadow-sm'
+                                    >
+                                        <img src={el.path} alt="product" className='w-full h-full object-cover' />
+                                        {hover === el.name && (
+                                            <div 
+                                                className='absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer animate-scale-up-center'
+                                                onClick={() => handleRemoveImage(el.name)}
+                                            >
+                                                <IoTrashBinOutline size={20} color='white' />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className='flex justify-end mt-6 pt-6 border-t'>
+                        <button 
+                            type='submit' 
+                            className='px-10 py-4 rounded-xl text-white bg-main font-bold uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg active:scale-95'
+                        >
+                            Create Product
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

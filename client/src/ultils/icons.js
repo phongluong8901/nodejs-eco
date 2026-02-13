@@ -1,6 +1,6 @@
 import { RiPhoneFill, RiTruckFill } from 'react-icons/ri'
 import { MdEmail, MdGroups } from 'react-icons/md'
-import { BsCartCheck, BsHandbagFill, BsFillSuitHeartFill, BsShieldShaded, BsReplyFill } from 'react-icons/bs'
+import { BsCartCheck, BsHandbagFill, BsFillSuitHeartFill, BsShieldShaded, BsReplyFill, BsCartCheckFill } from 'react-icons/bs'
 import { FaUserCircle, FaTty } from 'react-icons/fa'
 import { IoIosArrowForward } from 'react-icons/io'
 import { AiOutlineHeart, AiOutlineHistory, AiOutlineUser, AiOutlineDown, AiFillEye, AiFillHome, AiFillStar, AiOutlineStar, AiOutlineMenu, AiOutlineLogout, AiFillGift, AiOutlineDashboard } from 'react-icons/ai'
@@ -38,6 +38,7 @@ const icons = {
     BsCartCheck,
     AiOutlineHistory,
     AiOutlineHeart,
+
 
 }
 

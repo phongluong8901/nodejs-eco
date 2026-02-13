@@ -7,11 +7,11 @@ const Modal = ({ children }) => {
     const dispatch = useDispatch()
     return (
         <div 
-            onClick={() => dispatch(showModal({ isShowModal: false, modalChidren: null }))} 
-            // Đổi absolute thành fixed, thêm z-[999]
-            className='fixed inset-0 bg-black bg-opacity-50 z-[999] flex items-center justify-center'
+            // Sửa lỗi typo: modalChildren (có chữ l)
+            onClick={() => dispatch(showModal({ isShowModal: false, modalChildren: null }))} 
+            className='fixed inset-0 bg-overlay z-[1000] flex items-center justify-center'
         >
-            <div onClick={e => e.stopPropagation()}>
+            <div onClick={e => e.stopPropagation()} className='bg-white'>
                 {children}
             </div>
         </div>

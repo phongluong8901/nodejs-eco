@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Pagination, InputField, UpdateProduct, CustomizeVarriants } from '../../components';
 import { apiGetProducts, apiDeleteProduct } from '../../apis';
-import { formartMoney } from '../../ultils/helpers';
+import { formatMoney } from '../../ultils/helpers'; // Corrected typo from formartMoney
 import moment from 'moment';
 import { useSearchParams } from 'react-router-dom';
 import useDebounce from '../../hooks/useDebounce';
@@ -46,8 +46,8 @@ const ManagerProducts = () => {
             text: "You won't be able to revert this!",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
+            confirmButtonColor: '#ee3131',
+            cancelButtonColor: '#272727',
             confirmButtonText: 'Yes, delete it!'
         }).then(async (result) => {
             if (result.isConfirmed) {
@@ -64,8 +64,8 @@ const ManagerProducts = () => {
     const currentPage = +params.get('page') || 1;
 
     return (
-        <div className='w-full flex flex-col gap-4 bg-white min-h-screen relative'>
-            {/* 1. OVERLAY CẬP NHẬT SẢN PHẨM */}
+        <div className='w-full flex flex-col gap-4 bg-gray-50 min-h-screen relative font-sans'>
+            {/* 1. OVERLAY UPDATE PRODUCT */}
             {editProduct && (
                 <div className='absolute inset-0 z-[100] bg-white animate-slide-right'>
                     <UpdateProduct
@@ -76,7 +76,7 @@ const ManagerProducts = () => {
                 </div>
             )}
 
-            {/* 2. OVERLAY THÊM BIẾN THỂ (CUSTOMIZE VARRIANTS) */}
+            {/* 2. OVERLAY CUSTOMIZE VARRIANTS */}
             {customizeVarriant && (
                 <div className='absolute inset-0 z-[100] bg-white animate-slide-right'>
                     <CustomizeVarriants
@@ -87,12 +87,13 @@ const ManagerProducts = () => {
                 </div>
             )}
 
-            <header className='h-[75px] flex justify-between items-center text-3xl font-bold px-4 border-b uppercase'>
+            <header className='h-[75px] flex justify-between items-center text-3xl font-extrabold px-4 border-b bg-white uppercase tracking-tight'>
                 <span>Manage products</span>
             </header>
 
-            <div className='p-4'>
-                <div className='flex justify-end py-4'>
+            <div className='p-4 flex flex-col gap-4'>
+                {/* Search Bar Container */}
+                <div className='flex justify-end items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100'>
                     <InputField
                         nameKey={'q'}
                         value={queries.q}
@@ -102,74 +103,80 @@ const ManagerProducts = () => {
                     />
                 </div>
 
-                <div className='overflow-x-auto shadow-md'>
+                {/* Table Container */}
+                <div className='overflow-x-auto shadow-md rounded-xl border border-gray-200 bg-white'>
                     <table className='table-auto w-full text-left border-collapse'>
-                        <thead className='font-bold bg-sky-700 text-[13px] text-white uppercase'>
-                            <tr className='border border-gray-500'>
-                                <th className='px-4 py-3 text-center'>#</th>
-                                <th className='px-4 py-3 text-center'>Thumb</th>
-                                <th className='px-4 py-3'>Title</th>
-                                <th className='px-4 py-3'>Brand</th>
-                                <th className='px-4 py-3'>Category</th>
-                                <th className='px-4 py-3'>Price</th>
-                                <th className='px-4 py-3'>Quantity</th>
-                                <th className='px-4 py-3 text-center'>UpdatedAt</th>
-                                <th className='px-4 py-3 text-center'>Actions</th>
+                        <thead className='font-bold bg-gray-900 text-[12px] text-white uppercase tracking-wider'>
+                            <tr>
+                                <th className='px-6 py-4 text-center'>#</th>
+                                <th className='px-6 py-4 text-center'>Thumb</th>
+                                <th className='px-6 py-4'>Title</th>
+                                <th className='px-6 py-4'>Brand</th>
+                                <th className='px-6 py-4'>Category</th>
+                                <th className='px-6 py-4 text-center'>Price</th>
+                                <th className='px-6 py-4 text-center'>Stock</th>
+                                <th className='px-6 py-4 text-center'>UpdatedAt</th>
+                                <th className='px-6 py-4 text-center'>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className='text-sm text-gray-700'>
                             {products?.map((el, idx) => (
-                                <tr key={el._id} className='border border-gray-300 hover:bg-gray-50'>
-                                    <td className='py-3 px-4 text-center'>
+                                <tr key={el._id} className='border-b hover:bg-gray-50 transition-all'>
+                                    <td className='py-4 px-6 text-center font-medium'>
                                         {(currentPage - 1) * pageSize + idx + 1}
                                     </td>
-                                    <td className='py-3 px-4 text-center'>
-                                        <img src={el.thumb} alt="" className='w-12 h-12 object-cover rounded mx-auto' />
+                                    <td className='py-4 px-6 text-center'>
+                                        <img 
+                                            src={el.thumb} 
+                                            alt="thumb" 
+                                            className='w-14 h-14 object-cover rounded-lg shadow-sm border border-gray-100 mx-auto' 
+                                        />
                                     </td>
-                                    <td className='py-3 px-4'>
-                                        <span className='line-clamp-1'>{el.title}</span>
+                                    <td className='py-4 px-6'>
+                                        <span className='font-bold text-gray-800 line-clamp-1'>{el.title}</span>
                                     </td>
-                                    <td className='py-3 px-4'>
-                                        <span className='capitalize text-sm'>{el.brand}</span>
+                                    <td className='py-4 px-6'>
+                                        <span className='capitalize bg-gray-100 px-2 py-1 rounded text-xs text-gray-600 font-semibold'>{el.brand}</span>
                                     </td>
-                                    <td className='py-3 px-4'>
-                                        <span className='capitalize text-sm'>{el.category}</span>
+                                    <td className='py-4 px-6'>
+                                        <span className='capitalize text-gray-600 font-medium'>{el.category}</span>
                                     </td>
-                                    <td className='py-3 px-4'>
-                                        <span className='text-sm'>{formartMoney(el.price)} ₫</span>
+                                    <td className='py-4 px-6 text-center font-bold text-main'>
+                                        {formatMoney(el.price)} ₫
                                     </td>
-                                    <td className='py-3 px-4 text-center'>
-                                        <span className='text-sm'>{el.quantity}</span>
+                                    <td className='py-4 px-6 text-center'>
+                                        <span className={`px-2 py-1 rounded text-xs font-bold ${el.quantity > 10 ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
+                                            {el.quantity}
+                                        </span>
                                     </td>
-                                    <td className='py-3 px-4 text-center text-xs text-gray-600'>
-                                        {moment(el.updatedAt).format('DD/MM/YYYY')}
+                                    <td className='py-4 px-6 text-center text-gray-400 italic text-xs'>
+                                        {moment(el.updatedAt).format('MMM DD, YYYY')}
                                     </td>
-                                    <td className='py-3 px-4 text-center font-medium'>
-                                        <div className='flex justify-center gap-3'>
-                                            <span
+                                    <td className='py-4 px-6 text-center'>
+                                        <div className='flex justify-center gap-2'>
+                                            <button
                                                 onClick={() => setEditProduct(el)}
-                                                className='text-blue-500 hover:text-blue-700 cursor-pointer p-2 hover:bg-gray-100 rounded-full'
-                                                title='Edit'
+                                                className='p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm'
+                                                title='Edit Product'
                                             >
-                                                <BiEdit size={20} />
-                                            </span>
+                                                <BiEdit size={18} />
+                                            </button>
 
-                                            {/* Nút Customize Varriant */}
-                                            <span
+                                            <button
                                                 onClick={() => setCustomizeVarriant(el)}
-                                                className='text-green-500 hover:text-green-700 cursor-pointer p-2 hover:bg-gray-100 rounded-full'
-                                                title='Add Variant'
+                                                className='p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm'
+                                                title='Variants'
                                             >
-                                                <BiCustomize size={20} />
-                                            </span>
+                                                <BiCustomize size={18} />
+                                            </button>
 
-                                            <span
+                                            <button
                                                 onClick={() => handleDeleteProduct(el._id)}
-                                                className='text-red-500 hover:text-red-700 cursor-pointer p-2 hover:bg-gray-100 rounded-full'
-                                                title='Delete'
+                                                className='p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all shadow-sm'
+                                                title='Delete Product'
                                             >
-                                                <BiTrash size={20} />
-                                            </span>
+                                                <BiTrash size={18} />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
