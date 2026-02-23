@@ -39,4 +39,6 @@ npm i react-masonry-css
 
  npm i @paypal/react-paypal-js --legacy-peer-deps
  npm install chart.js react-chartjs-2 --legacy-peer-deps
+
 --- run
+npm start

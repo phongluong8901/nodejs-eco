@@ -23,8 +23,12 @@ router.delete('/', [verifyAccessToken, isAdmin], ctrls.deleteUser)
 router.put('/current', [verifyAccessToken], uploader.single('avatar'), ctrls.updateUser);
 router.put('/address', verifyAccessToken, ctrls.updateUserAddress)
 router.put('/cart', verifyAccessToken, ctrls.updateCart)
+router.delete('/remove-cart/:pid/:color', verifyAccessToken, ctrls.removeProductInCart)
 router.put('/:uid', [verifyAccessToken, isAdmin], ctrls.updateUserByAdmin)
 router.delete('/:uid', [verifyAccessToken, isAdmin], ctrls.deleteUserByAdmin)
+
+router.put('/wishlist/:pid', verifyAccessToken, ctrls.updateWishlist);
+router.put('/status/:oid', [verifyAccessToken, isAdmin], ctrls.updateStatus);
 
 
 module.exports = router

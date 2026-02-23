@@ -126,16 +126,24 @@ const login = async (req, res, next) => {
     } catch (error) { next(error) }
 }
 
-const getCurrent = async (req, res, next) => {
-    try {
-        const { _id } = req.user
-        const user = await User.findById(_id).select('-refreshToken -password')
-        return res.status(200).json({
-            success: !!user,
-            rs: user || 'User not found'
+const getCurrent = asyncHandler(async (req, res) => {
+    const { _id } = req.user
+    const user = await User.findById(_id)
+        .select('-password -refreshToken -passwordResetToken -passwordResetExpires')
+        .populate({
+            path: 'cart',
+            populate: {
+                path: 'product',
+                select: 'title thumb price' 
+            }
         })
-    } catch (error) { next(error) }
-}
+        .populate('wishlist', 'title thumb price category brand'); // THÊM DÒNG NÀY
+
+    return res.status(200).json({
+        success: user ? true : false,
+        rs: user
+    })
+})
 
 const refreshAccessToken = async (req, res, next) => {
     try {
@@ -351,33 +359,46 @@ const updateUserAddress = asyncHandler(async (req, res) => {
 })
 
 const updateCart = asyncHandler(async (req, res) => {
-    const {_id} = req.user
-    const {pid, quantity, color} = req.body
-    if (!pid || !quantity || !color) throw new Error('Missing inputs')
-    const user = await User.findById(_id).select('cart')
-    const alreadyProduct = user?.cart?.find(el => el.product.toString() === pid)
-    if (alreadyProduct) {
-        if (alreadyProduct.color === color) {
-            const response = await User.updateOne({cart: {$elemMatch: alreadyProduct}}, {$set: {"cart.$.quantity": quantity}}, {new: true})
-            return res.status(200).json({
-                success: response ? true: false,
-                updateCart: response ? response : 'Some thing went wrong'
-            })
-        } else {
-            const response = await User.findByIdAndUpdate(_id, {$push: {cart: {product: pid, quantity, color}}}, {new: true})
-            return res.status(200).json({
-                success: response ? true: false,
-                updateCart: response ? response : 'Some thing went wrong'
-            })
-        }
-    } else {
-        const response = await User.findByIdAndUpdate(_id, {$push: {cart: {product: pid, quantity, color}}}, {new: true})
-        return res.status(200).json({
-            success: response ? true: false,
-            updateCart: response ? response : 'Some thing went wrong'
-        })
-    }
+    const { _id } = req.user;
+    const { pid, quantity = 1, color } = req.body;
     
+    // Tìm user và kiểm tra sản phẩm đã có trong giỏ chưa
+    const user = await User.findById(_id).select('cart');
+    const alreadyProduct = user.cart.find(el => el.product.toString() === pid);
+
+    if (alreadyProduct) {
+        // Nếu đã có thì cập nhật số lượng và màu sắc [00:11:00]
+        const response = await User.updateOne(
+            { _id, "cart.product": pid },
+            { $set: { "cart.$.quantity": quantity, "cart.$.color": color } },
+            { new: true }
+        );
+        return res.json({ success: response ? true : false, mes: 'Updated cart' });
+    } else {
+        // Nếu chưa có thì dùng $push để thêm mới [00:10:52]
+        const response = await User.findByIdAndUpdate(
+            _id,
+            { $push: { cart: { product: pid, quantity, color } } },
+            { new: true }
+        );
+        return res.json({ success: response ? true : false, mes: 'Added to cart' });
+    }
+});
+
+const removeProductInCart = asyncHandler(async (req, res) => {
+    const { _id } = req.user
+    const { pid, color } = req.params
+    // Sử dụng $pull để xóa phần tử có product ID và color khớp
+    const user = await User.findByIdAndUpdate(_id, { $pull: { cart: { product: pid, color } } }, { new: true })
+        .populate({
+            path: 'cart',
+            populate: { path: 'product', select: 'title thumb price' }
+        })
+
+    return res.status(200).json({
+        success: user ? true : false,
+        rs: user
+    })
 })
 
 const createUsers = asyncHandler(async (req, res) => {
@@ -395,6 +416,48 @@ const createUsers = asyncHandler(async (req, res) => {
     })
 })
 
+const updateWishlist = asyncHandler(async (req, res) => {
+    const { pid } = req.params;
+    const { _id } = req.user;
+    
+    // Tìm user để xem pid này đã có trong wishlist chưa
+    const user = await User.findById(_id);
+    const alreadyWishlist = user.wishlist?.find(el => el.toString() === pid);
+
+    if (alreadyWishlist) {
+        // Nếu đã có -> Xóa khỏi wishlist
+        const response = await User.findByIdAndUpdate(_id, { $pull: { wishlist: pid } }, { new: true })
+            .populate('wishlist', 'title thumb price category brand');
+        return res.json({
+            success: response ? true : false,
+            mes: 'Removed from wishlist',
+            updatedUser: response
+        });
+    } else {
+        // Nếu chưa có -> Thêm vào wishlist
+        const response = await User.findByIdAndUpdate(_id, { $push: { wishlist: pid } }, { new: true })
+            .populate('wishlist', 'title thumb price category brand');
+        return res.json({
+            success: response ? true : false,
+            mes: 'Added to wishlist',
+            updatedUser: response
+        });
+    }
+});
+
+const updateStatus = asyncHandler(async (req, res) => {
+    const { oid } = req.params; // Order ID
+    const { status } = req.body;
+    if (!status) throw new Error('Missing status');
+
+    const response = await Order.findByIdAndUpdate(oid, { status }, { new: true });
+
+    return res.status(200).json({
+        success: response ? true : false,
+        mes: response ? 'Cập nhật trạng thái thành công' : 'Không thể cập nhật trạng thái'
+    });
+});
+
 
 module.exports = {
     register, login, getCurrent, 
@@ -402,5 +465,7 @@ module.exports = {
     forgotPassword, resetPassword,
     getUsers, deleteUser, updateUser, updateUserByAdmin,
     updateUserAddress, updateCart, finalRegister,
-    createUsers, deleteUserByAdmin
+    createUsers, deleteUserByAdmin,
+    removeProductInCart, updateWishlist,
+    updateStatus
 }
